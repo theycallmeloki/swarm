@@ -33,14 +33,25 @@ def md5(fname, chunk_size=4096):
 def proto_compile(output_path):
     import grpc_tools.protoc
 
+    # Ensure the output directories exist
+    os.makedirs(output_path, exist_ok=True)
+
+    proto_files = glob.glob("src/proto/*.proto")
+    if not proto_files:
+        raise FileNotFoundError("No .proto files found in 'src/proto'.")
+
     cli_args = [
                    "grpc_tools.protoc",
                    "--proto_path=src/proto",
                    f"--python_out={output_path}",
                    f"--grpc_python_out={output_path}",
-               ] + glob.glob("src/proto/*.proto")
+               ] + proto_files
 
     code = grpc_tools.protoc.main(cli_args)
+
+    if code != 0:
+        raise ValueError(f"{' '.join(cli_args)} finished with exit code {code}")
+        
     if code:  # hint: if you get this error in jupyter, run in console for richer error message
         raise ValueError(f"{' '.join(cli_args)} finished with exit code {code}")
     # Make pb2 imports in generated scripts relative
